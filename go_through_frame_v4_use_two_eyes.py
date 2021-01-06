@@ -371,11 +371,19 @@ while True:
             if(intstruction_count>1):
                 if(intstruction_movement=="d"):
                     #turn left 
-                    dronemove(0, -0.5, 0, 2,"a")
+                    dronemove(0, -0.5, 0, left_right_move_time,"a")
+                    time.sleep(sleep_time)
+                elif(intstruction_movement=="p"):
+                    #turn down 
+                    dronemove(0, 0, 0.5, up_down_move_time,"o")
+                    time.sleep(sleep_time)
+                elif(intstruction_movement=="o"):
+                    #turn up
+                    dronemove(0, 0, -0.5, up_down_move_time,"p")
                     time.sleep(sleep_time)
                 else:
                     #turn right
-                    dronemove(0, 0.5, 0, 2,"d")
+                    dronemove(0, 0.5, 0, left_right_move_time,"d")
                     time.sleep(sleep_time)
                 intstruction_count = 0
 
@@ -383,11 +391,19 @@ while True:
                 #turn left or right
                 if(intstruction_movement=="a"):
                     #turn left 
-                    dronemove(0, -0.5, 0, 2,intstruction_movement)
+                    dronemove(0, -0.5, 0, left_right_move_time,intstruction_movement)
+                    time.sleep(sleep_time)
+                elif(intstruction_movement=="o"):
+                    #turn down 
+                    dronemove(0, 0, 0.5, up_down_move_time,intstruction_movement)
+                    time.sleep(sleep_time)
+                elif(intstruction_movement=="p"):
+                    #turn up 
+                    dronemove(0, 0, -0.5, up_down_move_time,intstruction_movement)
                     time.sleep(sleep_time)
                 else:
                     #turn right
-                    dronemove(0, 0.5, 0, 2,intstruction_movement)
+                    dronemove(0, 0.5, 0, left_right_move_time,intstruction_movement)
                     time.sleep(sleep_time)
             
         #if can not find frame in three sequence image, the drone will move forward            
@@ -403,7 +419,7 @@ while True:
             count=0      
     #if the frame in the center of image and the frame is close. the drone just go forward
     elif(find_2m_three_time_or_not >= 4 and polygon.contains(point)==True):
-        dronemove(0, -0.125, 0, 4,"a")
+        dronemove(0, -0.125, 0, 2,"a")
         time.sleep(sleep_time)
         vehicleControl = client.moveByVelocityBodyFrameAsync(1, 0, 0, 8)
         vehicleControl.join()
