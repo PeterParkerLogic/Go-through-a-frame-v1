@@ -198,14 +198,14 @@ def get_rectangle_center_point(image):
         #cv2.circle(orig, (int(sum_x/4), int(sum_y/4)), 9, (0,0,255), -1)
     return int(sum_x/4), int(sum_y/4),int(max_x) ,int(min_x) ,int(max_y) , int(min_y) 
 
-
+#control the drone moving forward backward up down by drone's local location 
 def dronemove(vx,vy,vz,duration,movement):
     vehicleControl = client.moveByVelocityBodyFrameAsync(vx, vy, vz, duration)
     vehicleControl.join()
     print("You pressed ",movement)
     with open("instruction.txt", "a") as myfile:
         myfile.write(movement+"\n")
-
+#psmnet :evaluate depth predict model
 def test(imgL,imgR):
         model.eval()
 
@@ -333,37 +333,41 @@ while True:
     frame_center_point_X, frame_center_point_Y, max_x, min_x, max_y, min_y = get_rectangle_center_point(Limg_rgb)
     #airsim.write_file(os.path.normpath(left_filename + '.png'), response_left.image_data_uint8)
     #airsim.write_file(os.path.normpath(right_filename + '.png'), response_right.image_data_uint8)
+
+    #find_2m_three_time_or_not < 4, keep move as usual
     if(find_2m_three_time_or_not < 4):
         red_points_in_polygan = psmnet_predict_depth(Limg_rgb, Rimg_rgb, max_x, min_x, max_y, min_y)
         if(red_points_in_polygan > num_red_in_frame):
             find_2m_three_time_or_not += 1
-       
+
+    #find_2m_three_time_or_not > 4, change move duration  
     else:
         left_right_move_time = 0.3
         up_down_move_time = 0.3
         sleep_time = 2
 
     print("red_points_in_polygan : ",red_points_in_polygan)
-    # print("max_x : ",max_x)
-    # print("min_x : ",min_x)
-    # print("max_y : ",max_y)
-    # print("min_y : ",min_y)
+
     ##########################
     
+    #check if the center of frame are in the center of image
     point = Point(frame_center_point_X, frame_center_point_Y)
     polygon = Polygon([(935, 515), (985, 515), (985, 565), (935, 565)])
  
     print(frame_center_point_X,frame_center_point_Y)
     #if can not detect any frame 
     if(frame_center_point_X==0 and frame_center_point_Y ==0):
+        #if frame is close
         if(find_2m_three_time_or_not >= 4):
             #just can move left and right
             with open('instruction.txt', 'r') as f:
+                #get the last instrction of the txt
                 lines = f.read().splitlines()
                 last_line = lines[-1]
                 if(intstruction_movement==last_line):
                     intstruction_count+=1
                 intstruction_movement = last_line
+            #can not let drone keep same movement when opencv can not detect the drone
             if(intstruction_count>1):
                 if(intstruction_movement=="d"):
                     #turn left 
@@ -386,9 +390,10 @@ while True:
                     dronemove(0, 0.5, 0, 2,intstruction_movement)
                     time.sleep(sleep_time)
             
-
+        #if can not find frame in three sequence image, the drone will move forward            
         count+=1
         print("find_2m_three_time_or_not:",find_2m_three_time_or_not)
+        #
         if(find_2m_three_time_or_not < 4 and count>3):
             Denominator = randrange(1,10,1)
             vehicleControl = client.moveByVelocityBodyFrameAsync(1, 0, 0, 0.2)
@@ -396,6 +401,7 @@ while True:
             print("You pressed w")
             print("randrange:",Denominator)
             count=0      
+    #if the frame in the center of image and the frame is close. the drone just go forward
     elif(find_2m_three_time_or_not >= 4 and polygon.contains(point)==True):
         dronemove(0, -0.125, 0, 4,"a")
         time.sleep(sleep_time)
